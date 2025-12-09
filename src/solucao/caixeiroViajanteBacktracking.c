@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <emscripten.h>
 
 #define INF (INT_MAX / 4)
 
@@ -10,6 +11,7 @@ int *melhor_caminho;
 int melhor_custo;
 
 
+EMSCRIPTEN_KEEPALIVE
 int **criarAdjMatriz(int V) {
     int **m = malloc(V * sizeof(int*));
     for (int i = 0; i < V; ++i) {
@@ -83,6 +85,50 @@ int custo(int *tour) {
         if (sum >= INF) return INF;
     }
     return (int)sum;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int* resolver_backtracking_de_distancias(float* distancias, int n, int* custo_saida) {
+    V = n;
+    mat = criarAdjMatriz(V);
+    
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (i == j) {
+                mat[i][j] = 0;
+            } else {
+                mat[i][j] = (int)(distancias[i * V + j] * 100); 
+            }
+        }
+    }
+    
+    melhor_custo = INF;
+    melhor_caminho = malloc(V * sizeof(int));
+    int *caminho = malloc(V * sizeof(int));
+    int *visitados = calloc(V, sizeof(int));
+    
+    visitados[0] = 1;
+    caminho[0] = 0;
+    
+    tsp_backtrack(0, 1, caminho, visitados, 0);
+    
+    *custo_saida = melhor_custo;
+    int *resultado = malloc(V * sizeof(int));
+    for (int i = 0; i < V; i++) {
+        resultado[i] = melhor_caminho[i];
+    }
+    
+    free(caminho);
+    free(visitados);
+    free(melhor_caminho);
+    libertaMatriz(mat, V);
+    
+    return resultado;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void liberar_resultado(int* ptr) {
+    free(ptr);
 }
 
 int main(void) {

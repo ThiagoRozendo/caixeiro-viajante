@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caixeiro Viajante</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="main-title">Caixeiro Viajante</h1>
+
+        <div class="info-cards-container">
+            <div class="info-card">
+                <h2>O Desafio das Rotas</h2>
+                <p>O Problema do Caixeiro Viajante (PCV) é um dos problemas mais famosos e intensamente estudados na área de otimização combinatória e ciência da computação. Sua definição formal é: dado um conjunto de cidades e as distâncias entre cada par de cidades, qual é o caminho mais curto (ou de menor custo) que visita cada cidade exatamente uma vez e retorna à cidade de origem? O objetivo é encontrar um ciclo hamiltoniano de peso mínimo em um grafo completo onde as cidades são os vértices e as distâncias são os pesos das arestas.</p>
+            </div>
+            <div class="info-card">
+                <h2>O que é o Problema do Caixeiro Viajante?</h2>
+                <p>O cerne do PCV reside no desafio de rotas que se multiplica exponencialmente. Para $n$ cidades, o número total de rotas possíveis é $(n-1)!$ (fatorial de $n-1$), pois a primeira cidade é fixa (a origem), e o caixeiro deve permutar as $n-1$ cidades restantes. Por exemplo, com apenas 10 cidades, há $9! = 362.880$ rotas possíveis, mas com 20 cidades, esse número explode para $19!$, um valor na casa dos quintilhões. Este vasto espaço de busca torna inviável a simples verificação de todas as rotas para problemas de tamanho moderado a grande.</p>
+                <h2>Por que é tão difícil?</h2>
+                <p>A dificuldade do PCV está em sua classificação como um problema NP-difícil (Não-polinomial e Difícil). Isso significa que, embora seja relativamente fácil verificar se uma determinada rota é válida e calcular seu custo, não existe um algoritmo conhecido que consiga encontrar a solução ótima no pior caso em um tempo polinomial (ou seja, um tempo que cresce de forma "controlada" com o tamanho da entrada, como $n^2$ ou $n^3$). Na prática, isso implica que o tempo necessário para encontrar a solução ótima para grandes instâncias cresce tão rapidamente que se torna computacionalmente proibitivo, exigindo o uso de heurísticas e algoritmos de aproximação.</p>
+            </div>
+        </div>
+
+        <div class="top-section">
+            <div class="left-column">
+                <div class="generator-section-inline">
+                    <h2>Gerar Cidades</h2>
+                    <div class="generator-controls">
+                        <div class="slider-container">
+                            <label for="cityCount">Número de Cidades: <span id="cityCountDisplay">10</span></label>
+                            <div class="slider-wrapper">
+                                <input type="range" id="cityCount" min="3" max="20" value="10">
+                            </div>
+                        </div>
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="use2opt" checked>
+                            <label for="use2opt">Usar otimização 2-opt no algoritmo Guloso</label>
+                        </div>
+                        <button class="btn-generate">Gerar Novas Cidades</button>
+                    </div>
+                </div>
+
+                <div class="visualization-section">
+                    <canvas id="canvas" width="540" height="480"></canvas>
+                </div>
+            </div>
+
+            <div class="algorithms-container">
+                <div class="algorithm-section greedy-section">
+                    <h2>Abordagem Gulosa (Heurística)</h2>
+                    <div class="algorithm-description">
+                        <p>A abordagem gulosa é um método heurístico que constrói uma solução passo a passo, escolhendo sempre a melhor opção disponível naquele momento, sem olhar para o futuro e sem revisar decisões passadas.</p>
+                        <p>Vantagens: Roda em tempo polinomial e funciona até para muitos nós</p>
+                        <p>Desvantagens: A gulosa toma decisões locais, que nem sempre formam o melhor caminho global. Ela pode “se prender” numa região ruim.</p>
+                    </div>
+                    <button class="btn-execute" id="btnGreedy">Executar</button>
+                </div>
+
+                <div class="algorithm-section backtrack-section">
+                    <h2>Abordagem com Backtracking</h2>
+                    <div class="algorithm-description">
+                        <p>O backtracking explora todas as permutações possíveis, testando rotas completas. Quando percebe que uma rota parcial não pode levar a uma solução melhor, ele volta atrás (backtrack) e tenta outra.</p>
+                        <p>Vantagens: O backtracking garante a solução ótima, explorando todas as rotas possíveis e descartando cedo caminhos ruins graças às podas, oferecendo máxima precisão em problemas pequenos.</p>
+                        <p>Desvantagens: O método é muito lento em problemas maiores, pois o número de rotas cresce de forma explosiva, tornando o backtracking impraticável para instâncias mais amplas.</p>
+                    </div>
+                    <button class="btn-execute" id="btnBacktrack">Executar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider-line"></div>
+
+        <div class="results-section">
+            <h2>Resultados</h2>
+            <div class="results-container">
+                <div class="result-card" id="greedyResultCard">
+                    <h3>Algoritmo Guloso</h3>
+                    <p class="result-status">Aguardando execução...</p>
+                </div>
+                <div class="result-card" id="backtrackResultCard">
+                    <h3>Algoritmo Backtracking</h3>
+                    <p class="result-status">Aguardando execução...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider-line"></div>
+
+        <h1 class="section-title">Análise de Desempenho</h1>
+        
+        <div class="analysis-section">
+            <p class="analysis-description">Este gráfico exibe o custo total da rota (distância) encontrada por cada algoritmo. Observe como a solução rápida, porém imprecisa, do método Guloso se compara com a solução ótima garantida pelo Backtracking.</p>
+            <canvas id="chartCanvas" width="1465" height="687"></canvas>
+        </div>
+    </div>
+
+    <script src="backtracking.js"></script>
+    <script src="greedy.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

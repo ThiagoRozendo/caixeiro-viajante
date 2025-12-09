@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <emscripten.h>
 
 #define INF (INT_MAX / 4)
 
 int V;
 int **mat;
 
+EMSCRIPTEN_KEEPALIVE
 int **criarAdjMatriz(int Vparam) {
     int **m = malloc(Vparam * sizeof(int*));
     for (int i = 0; i < Vparam; ++i) {
@@ -137,6 +139,40 @@ int *greedy_todos_inicios(int aplicar_2opt) {
     }
 
     return melhor_tour; 
+}
+
+EMSCRIPTEN_KEEPALIVE
+int* resolver_guloso_de_distancias(float* distancias, int n, int* custo_saida, int aplicar_2opt) {
+    V = n;
+    mat = criarAdjMatriz(V);
+    
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (i == j) {
+                mat[i][j] = 0;
+            } else {
+                mat[i][j] = (int)(distancias[i * V + j] * 100); 
+            }
+        }
+    }
+    
+    int *melhor = greedy_todos_inicios(aplicar_2opt);
+    *custo_saida = custo(melhor);
+    
+    int *resultado = malloc(V * sizeof(int));
+    for (int i = 0; i < V; i++) {
+        resultado[i] = melhor[i];
+    }
+    
+    free(melhor);
+    libertaMatriz(mat, V);
+    
+    return resultado;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void liberar_resultado(int* ptr) {
+    free(ptr);
 }
 
 int main(void) {
