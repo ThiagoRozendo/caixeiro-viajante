@@ -76,7 +76,7 @@ function generateCities(n) {
     for (let i = 0; i < n; i++) {
         const x = margin + Math.random() * (canvas.width - 2 * margin);
         const y = margin + Math.random() * (canvas.height - 2 * margin);
-        cities.push(new City(x, y, i + 1));
+        cities.push(new City(x, y, i));
     }
     drawCities();
     clearResults();
@@ -108,6 +108,7 @@ async function greedyAlgorithm() {
         return null;
     }
     
+    const startTime = performance.now();
     const use2opt = document.getElementById('use2opt').checked;
     console.log('Executando algoritmo guloso', use2opt ? 'COM' : 'SEM', '2-opt');
     
@@ -127,7 +128,9 @@ async function greedyAlgorithm() {
     const distancesPtr = greedyModule._malloc(distances.length * 4);
     const costPtr = greedyModule._malloc(4);
     
-    greedyModule.HEAPF32.set(distances, distancesPtr / 4);
+    for (let i = 0; i < distances.length; i++) {
+        greedyModule.setValue(distancesPtr + i * 4, distances[i], 'float');
+    }
     
     const apply2opt = use2opt ? 1 : 0;
     const resultPtr = greedyModule._resolver_guloso_de_distancias(distancesPtr, n, costPtr, apply2opt);
@@ -142,9 +145,13 @@ async function greedyAlgorithm() {
     greedyModule._free(costPtr);
     greedyModule._liberar_resultado(resultPtr);
     
+    const endTime = performance.now();
+    const executionTime = (endTime - startTime) / 1000;
+    
     return {
         path: path,
-        distance: cost
+        distance: cost,
+        time: executionTime
     };
 }
 
@@ -155,6 +162,7 @@ async function backtrackingAlgorithm() {
         return null;
     }
     
+    const startTime = performance.now();
     console.log('Executando backtracking');
     
     const n = cities.length;
@@ -173,7 +181,9 @@ async function backtrackingAlgorithm() {
     const distancesPtr = backtrackModule._malloc(distances.length * 4);
     const costPtr = backtrackModule._malloc(4);
     
-    backtrackModule.HEAPF32.set(distances, distancesPtr / 4);
+    for (let i = 0; i < distances.length; i++) {
+        backtrackModule.setValue(distancesPtr + i * 4, distances[i], 'float');
+    }
     
     const resultPtr = backtrackModule._resolver_backtracking_de_distancias(distancesPtr, n, costPtr);
     
@@ -187,9 +197,13 @@ async function backtrackingAlgorithm() {
     backtrackModule._free(costPtr);
     backtrackModule._liberar_resultado(resultPtr);
     
+    const endTime = performance.now();
+    const executionTime = (endTime - startTime) / 1000;
+    
     return {
         path: path,
-        distance: cost
+        distance: cost,
+        time: executionTime
     };
 }
 
@@ -210,7 +224,15 @@ function clearResults() {
 
 function updateResultCard(cardId, result, algorithmName, executionTime = null) {
     const card = document.getElementById(cardId);
-    const pathString = result.path.join(' → ') + ' → ' + result.path[0];
+    
+    // Rotaciona o caminho para começar do 0 (apenas no display)
+    let displayPath = [...result.path];
+    const zeroIndex = displayPath.indexOf(0);
+    if (zeroIndex > 0) {
+        displayPath = [...displayPath.slice(zeroIndex), ...displayPath.slice(0, zeroIndex)];
+    }
+    
+    const pathString = displayPath.join(' → ') + ' → ' + displayPath[0];
     
     let html = `
         <h3>Algoritmo ${algorithmName}</h3>
@@ -333,7 +355,7 @@ document.getElementById('btnGreedy').addEventListener('click', async () => {
     greedyResult = await greedyAlgorithm();
     drawCities(greedyResult.path, COLORS.GREEDY);
     updateChart();
-    updateResultCard('greedyResultCard', greedyResult, 'Guloso');
+    updateResultCard('greedyResultCard', greedyResult, 'Guloso', greedyResult.time);
 });
 
 document.getElementById('btnBacktrack').addEventListener('click', async () => {
@@ -354,15 +376,12 @@ document.getElementById('btnBacktrack').addEventListener('click', async () => {
         }
     }
     
-    const startTime = Date.now();
     backtrackResult = await backtrackingAlgorithm();
-    const endTime = Date.now();
     
     drawCities(backtrackResult.path, COLORS.BACKTRACK);
     updateChart();
     
-    const executionTime = (endTime - startTime) / 1000;
-    updateResultCard('backtrackResultCard', backtrackResult, 'Backtracking', executionTime);
+    updateResultCard('backtrackResultCard', backtrackResult, 'Backtracking', backtrackResult.time);
 });
 
 generateCities(numCities);
